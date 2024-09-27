@@ -9,9 +9,12 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// 사용자 에이전트 문자열 정의
+const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36";
+
 async function searchYouTube(query) {
   try {
-    const { stdout } = await execPromise(`yt-dlp ytsearch:"${query}" --get-id --get-title`);
+    const { stdout } = await execPromise(`yt-dlp ytsearch:"${query}" --get-id --get-title --user-agent "${USER_AGENT}"`);
     const results = stdout.trim().split('\n');
     const videos = [];
     for (let i = 0; i < results.length; i += 2) {
@@ -27,6 +30,11 @@ async function searchYouTube(query) {
 async function playAudio(videoId) {
   try {
     const audioUrl = await getAudioUrl(videoId);
+    if (!audioUrl) {
+      console.error('Failed to get audio URL');
+      return;
+    }
+    console.log('Playing audio:', audioUrl);
     await execPromise(`mpv "${audioUrl}"`);
   } catch (error) {
     console.error('Error playing audio:', error);
