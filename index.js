@@ -35,7 +35,9 @@ async function playAudio(videoId) {
 
 async function getAudioUrl(videoId) {
   try {
-    const { stdout } = await execPromise(`yt-dlp -g -f bestaudio "https://www.youtube.com/watch?v=${videoId}"`);
+    const { stdout, stderr } = await execPromise(`yt-dlp -g -f bestaudio "https://www.youtube.com/watch?v=${videoId}" --user-agent "${USER_AGENT}" --no-check-certificate --verbose`);
+    console.log('yt-dlp stdout:', stdout);
+    console.log('yt-dlp stderr:', stderr);
     return stdout.trim();
   } catch (error) {
     console.error('Error getting audio URL:', error);
