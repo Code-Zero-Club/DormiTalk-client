@@ -9,9 +9,13 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
+// 전체 경로 설정
+const YOUTUBE_DL_PATH = '/usr/local/bin/youtube-dl';
+const MPV_PATH = '/usr/bin/mpv';
+
 async function searchYouTube(query) {
   try {
-    const { stdout } = await execPromise(`youtube-dl ytsearch:"${query}" --get-id --get-title`);
+    const { stdout } = await execPromise(`${YOUTUBE_DL_PATH} ytsearch:"${query}" --get-id --get-title`);
     const results = stdout.trim().split('\n');
     const videos = [];
     for (let i = 0; i < results.length; i += 2) {
@@ -27,7 +31,7 @@ async function searchYouTube(query) {
 async function playAudio(videoId) {
   try {
     const audioUrl = await getAudioUrl(videoId);
-    await execPromise(`mpv "${audioUrl}"`);
+    await execPromise(`${MPV_PATH} "${audioUrl}"`);
   } catch (error) {
     console.error('Error playing audio:', error);
   }
@@ -35,7 +39,7 @@ async function playAudio(videoId) {
 
 async function getAudioUrl(videoId) {
   try {
-    const { stdout } = await execPromise(`youtube-dl -g -f bestaudio "https://www.youtube.com/watch?v=${videoId}"`);
+    const { stdout } = await execPromise(`${YOUTUBE_DL_PATH} -g -f bestaudio "https://www.youtube.com/watch?v=${videoId}"`);
     return stdout.trim();
   } catch (error) {
     console.error('Error getting audio URL:', error);
@@ -43,7 +47,21 @@ async function getAudioUrl(videoId) {
   }
 }
 
+async function checkDependencies() {
+  try {
+    await execPromise(`${YOUTUBE_DL_PATH} --version`);
+    await execPromise(`${MPV_PATH} --version`);
+    console.log('All dependencies are installed correctly.');
+  } catch (error) {
+    console.error('Error: Some dependencies are missing or not in the correct path.');
+    console.error('Please make sure youtube-dl and mpv are installed and in your system PATH.');
+    process.exit(1);
+  }
+}
+
 async function main() {
+  await checkDependencies();
+
   while (true) {
     const query = await new Promise(resolve => rl.question('Enter a song to search (or "quit" to exit): ', resolve));
     
