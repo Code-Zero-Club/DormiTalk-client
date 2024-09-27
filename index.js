@@ -1,4 +1,4 @@
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const readline = require('readline');
 const util = require('util');
 
@@ -9,7 +9,6 @@ const rl = readline.createInterface({
   output: process.stdout
 });
 
-// yt-dlp 경로 수동 지정
 const YT_DLP_PATH = '/usr/local/bin/yt-dlp';
 const YT_DLP_OPTIONS = '--format bestaudio --geo-bypass --no-check-certificate';
 
@@ -28,19 +27,40 @@ async function searchYouTube(query) {
   }
 }
 
-async function playAudio(videoId) {
+async function playAudio(videoId, title) {
   try {
     const audioUrl = await getAudioUrl(videoId);
     if (!audioUrl) {
       console.error('Failed to get audio URL');
       return;
     }
-    console.log('Playing audio:', audioUrl);
-    await execPromise(`mpv "${audioUrl}"`);
+    console.log(`Playing: ${title}`);
+    console.log('Audio URL:', audioUrl);
+
+    const mpv = spawn('mpv', ['--no-video', '--term-osd-bar', audioUrl]);
+
+    mpv.stdout.on('data', (data) => {
+      const output = data.toString().trim();
+      if (output.includes('AV:') || output.includes('A:')) {
+        // Clear the previous line and move the cursor up
+        process.stdout.write('\x1B[1A\x1B[K');
+        console.log(output);
+      }
+    });
+
+    mpv.stderr.on('data', (data) => {
+      console.error(`mpv stderr: ${data}`);
+    });
+
+    mpv.on('close', (code) => {
+      console.log(`mpv process exited with code ${code}`);
+    });
+
+    // Wait for user input to stop playback
+    await new Promise(resolve => rl.question('Press Enter to stop playback...', resolve));
+    mpv.kill();
   } catch (error) {
     console.error('Error playing audio:', error.message);
-    if (error.stdout) console.error('mpv stdout:', error.stdout);
-    if (error.stderr) console.error('mpv stderr:', error.stderr);
   }
 }
 
@@ -96,8 +116,7 @@ async function main() {
     const index = parseInt(choice) - 1;
 
     if (index >= 0 && index < videos.length) {
-      console.log(`Playing: ${videos[index].title}`);
-      await playAudio(videos[index].id);
+      await playAudio(videos[index].id, videos[index].title);
     } else {
       console.log('Invalid choice.');
     }
