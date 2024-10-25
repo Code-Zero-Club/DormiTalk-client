@@ -1,0 +1,18 @@
+{
+  "ytdlp": {
+    "path": "/usr/local/bin/yt-dlp",
+    "options": {
+      "format": "bestaudio",
+      "geoBypass": true,
+      "noCheckCertificate": true
+    }
+  },
+  "mpv": {
+    "options": {
+      "noVideo": true,
+      "noAudio": true,
+      "termOsdBar": true,
+      "msgLevel": "all=v"
+    }
+  }
+}
