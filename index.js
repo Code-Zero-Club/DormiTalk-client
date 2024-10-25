@@ -99,12 +99,33 @@ async function playAudio(videoId, title, config) {
     mpv.stdout.on('data', (data) => {
       const output = data.toString().trim();
       
+      // Duration 파싱
+      if (output.includes('Duration:')) {
+        const durationMatch = output.match(/Duration: (\d+):(\d+):(\d+)/);
+        if (durationMatch) {
+          const [_, hours, minutes, seconds] = durationMatch;
+          duration = (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+        }
+      }
+      
+      // 현재 재생 시간 파싱
       if (output.includes('A:')) {
-        const timeMatch = output.match(/A:\s*(\d+):(\d+)/);
+        const timeMatch = output.match(/A:\s*(\d+):(\d+):(\d+)/);
         if (timeMatch) {
-          currentTime = parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
-          process.stdout.write('\r\x1B[K'); // 현재 줄을 지움
-          process.stdout.write(`Playing: ${formatTime(currentTime)}`);
+          const [_, hours, minutes, seconds] = timeMatch;
+          currentTime = (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+          
+          // 진행률 계산
+          const progress = duration ? Math.floor((currentTime / duration) * 100) : 0;
+          
+          // 프로그레스 바 생성
+          const barLength = 30;
+          const completedLength = Math.floor((progress * barLength) / 100);
+          const progressBar = '█'.repeat(completedLength) + '▒'.repeat(barLength - completedLength);
+          
+          // 이전 줄을 지우고 새로운 진행 상황 표시
+          process.stdout.write('\r\x1B[K');
+          process.stdout.write(`${progressBar} ${formatTime(currentTime)} / ${formatTime(duration)} (${progress}%)`);
         }
       }
     });
@@ -155,10 +176,11 @@ async function getAudioUrl(videoId, config) {
 }
 
 function formatTime(seconds) {
-  if (!seconds) return '00:00';
-  const mins = Math.floor(seconds / 60);
+  if (!seconds) return '00:00:00';
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
 async function checkDependencies(config) {
