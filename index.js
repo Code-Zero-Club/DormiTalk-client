@@ -26,15 +26,17 @@ async function loadConfig() {
         options: {
           format: 'bestaudio',
           geoBypass: true,
-          noCheckCertificate: true
+          noCheckCertificate: true,
+          audioFormat: 'mp3',
+          audioQuality: 0
         }
       },
       mpv: {
         options: {
           noVideo: true,
-          noAudio: true,
-          termOsdBar: true,
-          msgLevel: 'all=v'
+          audioDevice: 'alsa/default',
+          volume: 100,
+          termOsdBar: true
         }
       }
     };
@@ -47,6 +49,8 @@ function buildYtdlpOptions(options) {
   if (options.format) optionsArray.push(`--format ${options.format}`);
   if (options.geoBypass) optionsArray.push('--geo-bypass');
   if (options.noCheckCertificate) optionsArray.push('--no-check-certificate');
+  if (options.audioFormat) optionsArray.push(`--audio-format ${options.audioFormat}`);
+  if (options.audioQuality !== undefined) optionsArray.push(`--audio-quality ${options.audioQuality}`);
   return optionsArray.join(' ');
 }
 
@@ -54,9 +58,9 @@ function buildYtdlpOptions(options) {
 function buildMpvOptions(options, url) {
   const optionsArray = [];
   if (options.noVideo) optionsArray.push('--no-video');
-  if (options.noAudio) optionsArray.push('--no-audio');
+  if (options.audioDevice) optionsArray.push(`--audio-device=${options.audioDevice}`);
+  if (options.volume) optionsArray.push(`--volume=${options.volume}`);
   if (options.termOsdBar) optionsArray.push('--term-osd-bar');
-  if (options.msgLevel) optionsArray.push(`--msg-level=${options.msgLevel}`);
   optionsArray.push(url);
   return optionsArray;
 }
@@ -85,7 +89,6 @@ async function playAudio(videoId, title, config) {
       return;
     }
     console.log(`\nPlaying: ${title}`);
-    console.log('Audio URL:', audioUrl);
 
     const mpvOptions = buildMpvOptions(config.mpv.options, audioUrl);
     const mpv = spawn('mpv', mpvOptions);
@@ -96,41 +99,40 @@ async function playAudio(videoId, title, config) {
     mpv.stdout.on('data', (data) => {
       const output = data.toString().trim();
       
-      if (output.includes('Duration:')) {
-        const match = output.match(/Duration: (\d+)/);
-        if (match) {
-          duration = parseInt(match[1]);
-        }
-      }
-      
-      if (output.includes('Time:')) {
-        const match = output.match(/Time: (\d+)/);
-        if (match) {
-          currentTime = parseInt(match[1]);
-          const progress = duration ? Math.floor((currentTime / duration) * 100) : 0;
-          
-          process.stdout.write('\x1B[1A\x1B[K');
-          console.log(`Progress: ${formatTime(currentTime)} / ${formatTime(duration)} (${progress}%)`);
+      if (output.includes('A:')) {
+        const timeMatch = output.match(/A:\s*(\d+):(\d+)/);
+        if (timeMatch) {
+          currentTime = parseInt(timeMatch[1]) * 60 + parseInt(timeMatch[2]);
+          process.stdout.write('\r\x1B[K'); // 현재 줄을 지움
+          process.stdout.write(`Playing: ${formatTime(currentTime)}`);
         }
       }
     });
 
     mpv.stderr.on('data', (data) => {
       const error = data.toString().trim();
-      if (!error.includes('ALSA')) {
-        console.error(`mpv stderr: ${error}`);
+      // 중요한 오류만 표시
+      if (error.includes('ERROR') || error.includes('Failed')) {
+        console.error(`\nmpv error: ${error}`);
       }
     });
 
+    let playbackEnded = false;
     await new Promise(resolve => {
       mpv.on('close', (code) => {
-        console.log(`\nPlayback ended (exit code: ${code})`);
-        resolve();
+        if (!playbackEnded) {
+          playbackEnded = true;
+          console.log(`\nPlayback ended (exit code: ${code})`);
+          resolve();
+        }
       });
       
       rl.question('\nPress Enter to stop playback...', () => {
-        mpv.kill();
-        resolve();
+        if (!playbackEnded) {
+          playbackEnded = true;
+          mpv.kill();
+          resolve();
+        }
       });
     });
   } catch (error) {
@@ -142,12 +144,12 @@ async function getAudioUrl(videoId, config) {
   try {
     const options = buildYtdlpOptions(config.ytdlp.options);
     const { stdout, stderr } = await execPromise(`${config.ytdlp.path} ${options} -g "https://www.youtube.com/watch?v=${videoId}"`);
-    if (stderr) console.error('yt-dlp stderr:', stderr);
+    if (stderr && !stderr.includes('YouTube video')) {
+      console.error('yt-dlp stderr:', stderr);
+    }
     return stdout.trim();
   } catch (error) {
     console.error('Error getting audio URL:', error.message);
-    if (error.stdout) console.error('yt-dlp stdout:', error.stdout);
-    if (error.stderr) console.error('yt-dlp stderr:', error.stderr);
     return null;
   }
 }
@@ -174,7 +176,7 @@ async function checkDependencies(config) {
 
 async function main() {
   const config = await loadConfig();
-  console.log('WSL Test Mode: Audio output is disabled');
+  console.log('YouTube Music Player for Raspbian');
   await checkDependencies(config);
 
   while (true) {

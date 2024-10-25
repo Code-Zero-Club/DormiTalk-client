@@ -4,15 +4,17 @@
     "options": {
       "format": "bestaudio",
       "geoBypass": true,
-      "noCheckCertificate": true
+      "noCheckCertificate": true,
+      "audioFormat": "mp3",
+      "audioQuality": 0
     }
   },
   "mpv": {
     "options": {
       "noVideo": true,
-      "noAudio": true,
-      "termOsdBar": true,
-      "msgLevel": "all=v"
+      "audioDevice": "alsa/default",
+      "volume": 100,
+      "termOsdBar": true
     }
   }
 }
