@@ -1,12 +1,28 @@
 const readline = require('readline');
+const { exec } = require('child_process');
+const util = require('util');
 const { searchYouTube } = require('../services/youtubeService');
 const { playAudio } = require('../services/playerService');
+
+const execPromise = util.promisify(exec);
 
 class CLI {
   constructor() {
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout
+    });
+
+    this.start = this.start.bind(this);
+    this.checkDependencies = this.checkDependencies.bind(this);
+    this.askQuestion = this.askQuestion.bind(this);
+  }
+
+  askQuestion(question) {
+    return new Promise((resolve) => {
+      this.rl.question(question, (answer) => {
+        resolve(answer);
+      });
     });
   }
 
@@ -67,9 +83,13 @@ class CLI {
       }
 
       // mpv 체크
-      const mpvPath = await findExecutable('mpv');
+      let mpvPath = config.mpv.path;
       if (!mpvPath) {
-        throw new Error('mpv not found in PATH');
+        // 설정된 경로가 없는 경우 which로 찾기
+        mpvPath = await findExecutable('mpv');
+        if (!mpvPath) {
+          throw new Error('mpv not found in PATH');
+        }
       }
 
       // 버전 체크 실행
@@ -93,13 +113,6 @@ class CLI {
       
     } catch (error) {
       console.error('Dependency check error:', error.message);
-      console.error('Please ensure that:');
-      console.error('1. yt-dlp and mpv are installed');
-      console.error('2. The executables have proper permissions');
-      console.error('3. The paths in config.json are correct');
-      console.error('\nTry running these commands manually:');
-      console.error('which yt-dlp');
-      console.error('which mpv');
       process.exit(1);
     }
   }
