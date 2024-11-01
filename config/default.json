@@ -1,6 +1,6 @@
 {
   "ytdlp": {
-    "path": "/usr/bin/yt-dlp",
+    "path": "/usr/local/bin/yt-dlp",
     "options": {
       "format": "bestaudio",
       "geoBypass": true,
