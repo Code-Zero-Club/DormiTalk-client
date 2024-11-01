@@ -22,6 +22,7 @@ async function loadConfig() {
         }
       },
       mpv: {
+        path: '/usr/bin/mpv',
         options: {
           noVideo: true,
           audioDevice: 'alsa/default',
