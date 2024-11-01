@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const { buildMpvOptions } = require('../utils/optionsBuilder');
+const { getAudioUrl } = require('./youtubeService');
 const { formatTime } = require('../utils/timeFormatter');
 
 async function playAudio(videoId, title, config, rl) {
@@ -9,10 +9,17 @@ async function playAudio(videoId, title, config, rl) {
       console.error('Failed to get audio URL');
       return;
     }
-    console.log(`\nPlaying: ${title}`);
 
-    const mpvOptions = buildMpvOptions(config.mpv.options, audioUrl);
-    const mpv = spawn('mpv', mpvOptions);
+    console.log(`\nPlaying: ${title}`);
+    
+    const mpvArgs = [];
+    if (config.mpv.options.noVideo) mpvArgs.push('--no-video');
+    if (config.mpv.options.audioDevice) mpvArgs.push(`--audio-device=${config.mpv.options.audioDevice}`);
+    if (config.mpv.options.volume) mpvArgs.push(`--volume=${config.mpv.options.volume}`);
+    if (config.mpv.options.termOsdBar) mpvArgs.push('--term-osd-bar');
+    mpvArgs.push(audioUrl);
+
+    const mpv = spawn('mpv', mpvArgs);
 
     let duration = null;
     let currentTime = 0;
@@ -35,7 +42,6 @@ async function playAudio(videoId, title, config, rl) {
           currentTime = (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
           
           const progress = duration ? Math.floor((currentTime / duration) * 100) : 0;
-          
           const barLength = 30;
           const completedLength = Math.floor((progress * barLength) / 100);
           const progressBar = '█'.repeat(completedLength) + '▒'.repeat(barLength - completedLength);
