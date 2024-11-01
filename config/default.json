@@ -2,10 +2,10 @@
   "ytdlp": {
     "path": "/usr/local/bin/yt-dlp",
     "options": {
-      "format": "bestaudio",
+      "format": "bestaudio[ext=m4a]/bestaudio",
       "geoBypass": true,
       "noCheckCertificate": true,
-      "audioFormat": "mp3",
+      "audioFormat": "m4a",
       "audioQuality": 0
     }
   },
@@ -13,7 +13,7 @@
     "path": "/usr/bin/mpv",
     "options": {
       "noVideo": true,
-      "audioDevice": "alsa/default",
+      "audioDevice": "auto",
       "volume": 100,
       "termOsdBar": true
     }

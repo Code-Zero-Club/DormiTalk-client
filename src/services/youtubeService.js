@@ -8,7 +8,7 @@ async function searchYouTube(query, config) {
       return [];
     }
     
-    const command = `${config.ytdlp.path} ytsearch:"${query}" --get-id --get-title --no-warnings`;
+    const command = `${config.ytdlp.path} ytsearch5:"${query}" --get-id --get-title --no-warnings`;
     const { stdout } = await execPromise(command);
     
     const results = stdout.trim().split('\n');
@@ -30,15 +30,4 @@ async function searchYouTube(query, config) {
   }
 }
 
-async function getAudioUrl(videoId, config) {
-  try {
-    const command = `${config.ytdlp.path} -g "https://www.youtube.com/watch?v=${videoId}"`;
-    const { stdout } = await execPromise(command);
-    return stdout.trim();
-  } catch (error) {
-    console.error('Error getting audio URL:', error.message);
-    return null;
-  }
-}
-
-module.exports = { searchYouTube, getAudioUrl };
+module.exports = { searchYouTube };

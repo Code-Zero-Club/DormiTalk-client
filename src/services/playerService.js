@@ -1,26 +1,26 @@
 const { spawn } = require('child_process');
-const { getAudioUrl } = require('./youtubeService');
 const { formatTime } = require('../utils/timeFormatter');
 
 async function playAudio(videoId, title, config, rl) {
   try {
-    const audioUrl = await getAudioUrl(videoId, config);
-    if (!audioUrl) {
-      console.error('Failed to get audio URL');
-      return;
-    }
-
     console.log(`\nPlaying: ${title}`);
     
-    const mpvArgs = [];
-    if (config.mpv.options.noVideo) mpvArgs.push('--no-video');
-    if (config.mpv.options.audioDevice) mpvArgs.push(`--audio-device=${config.mpv.options.audioDevice}`);
-    if (config.mpv.options.volume) mpvArgs.push(`--volume=${config.mpv.options.volume}`);
-    if (config.mpv.options.termOsdBar) mpvArgs.push('--term-osd-bar');
-    mpvArgs.push(audioUrl);
+    // 단일 mpv 명령어로 실행
+    const mpvArgs = [
+      `ytdl://${videoId}`,  // ytdl 프로토콜 사용
+      '--no-video',
+      '--term-osd-bar',
+      '--volume=100',
+      `--script-opts=ytdl_path=${config.ytdlp.path}`,  // yt-dlp 경로 지정
+      '--ytdl-format=bestaudio[ext=m4a]/bestaudio', // 오디오 포맷 지정
+      '--force-seekable=yes'  // 시크 가능하도록 설정
+    ];
+
+    if (config.mpv.options.audioDevice) {
+      mpvArgs.push(`--audio-device=${config.mpv.options.audioDevice}`);
+    }
 
     const mpv = spawn('mpv', mpvArgs);
-
     let duration = null;
     let currentTime = 0;
 
@@ -54,28 +54,37 @@ async function playAudio(videoId, title, config, rl) {
 
     mpv.stderr.on('data', (data) => {
       const error = data.toString().trim();
+      // 일반적인 상태 메시지는 무시
       if (error.includes('ERROR') || error.includes('Failed')) {
         console.error(`\nmpv error: ${error}`);
       }
     });
 
     let playbackEnded = false;
-    await new Promise(resolve => {
-      mpv.on('close', (code) => {
-        if (!playbackEnded) {
-          playbackEnded = true;
-          console.log(`\nPlayback ended (exit code: ${code})`);
-          resolve();
-        }
-      });
-      
-      rl.question('\nPress Enter to stop playback...', () => {
+    await new Promise((resolve) => {
+      const cleanup = () => {
         if (!playbackEnded) {
           playbackEnded = true;
           mpv.kill();
           resolve();
         }
+      };
+
+      mpv.on('close', (code) => {
+        if (code !== 0) {
+          console.error(`\nPlayback ended with error (exit code: ${code})`);
+        } else {
+          console.log(`\nPlayback ended`);
+        }
+        cleanup();
       });
+
+      mpv.on('error', (error) => {
+        console.error('\nmpv error:', error);
+        cleanup();
+      });
+      
+      rl.question('\nPress Enter to stop playback...', cleanup);
     });
   } catch (error) {
     console.error('Error playing audio:', error.message);
