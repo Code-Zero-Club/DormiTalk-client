@@ -1,6 +1,6 @@
 {
   "ytdlp": {
-    "path": "/usr/local/bin/yt-dlp",
+    "path": "",
     "options": {
       "format": "bestaudio[ext=m4a]/bestaudio",
       "geoBypass": true,
@@ -10,7 +10,7 @@
     }
   },
   "mpv": {
-    "path": "/usr/bin/mpv",
+    "path": "",
     "options": {
       "noVideo": true,
       "audioDevice": "auto",

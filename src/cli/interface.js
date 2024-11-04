@@ -62,7 +62,6 @@ class CLI {
 
   async checkDependencies(config) {
     try {
-      // which 명령어로 실행 파일의 전체 경로 찾기
       const findExecutable = async (command) => {
         try {
           const { stdout } = await execPromise(`which ${command}`);
@@ -75,7 +74,6 @@ class CLI {
       // yt-dlp 체크
       let ytdlpPath = config.ytdlp.path;
       if (!ytdlpPath.startsWith('/')) {
-        // 설정된 경로가 상대 경로인 경우 which로 찾기
         ytdlpPath = await findExecutable('yt-dlp');
         if (!ytdlpPath) {
           throw new Error('yt-dlp not found in PATH');
@@ -85,7 +83,6 @@ class CLI {
       // mpv 체크
       let mpvPath = config.mpv.path;
       if (!mpvPath) {
-        // 설정된 경로가 없는 경우 which로 찾기
         mpvPath = await findExecutable('mpv');
         if (!mpvPath) {
           throw new Error('mpv not found in PATH');
@@ -108,8 +105,8 @@ class CLI {
       console.log('yt-dlp version:', ytdlpVersion.trim());
       console.log('mpv version:', mpvVersion.split('\n')[0]);
 
-      // 성공한 경로로 설정 업데이트
       config.ytdlp.path = ytdlpPath;
+      config.mpv.path = mpvPath;
       
     } catch (error) {
       console.error('Dependency check error:', error.message);
