@@ -5,15 +5,14 @@ async function playAudio(videoId, title, config, rl) {
   try {
     console.log(`\nPlaying: ${title}`);
     
-    // 단일 mpv 명령어로 실행
     const mpvArgs = [
-      `ytdl://${videoId}`,  // ytdl 프로토콜 사용
+      `ytdl://${videoId}`,
       '--no-video',
       '--term-osd-bar',
       '--volume=100',
-      `--script-opts=ytdl_path=${config.ytdlp.path}`,  // yt-dlp 경로 지정
-      '--ytdl-format=bestaudio[ext=m4a]/bestaudio', // 오디오 포맷 지정
-      '--force-seekable=yes'  // 시크 가능하도록 설정
+      `--script-opts=ytdl_path=${config.ytdlp.path}`,
+      '--ytdl-format=bestaudio[ext=m4a]/bestaudio',
+      '--force-seekable=yes'
     ];
 
     if (config.mpv.options.audioDevice) {
@@ -54,7 +53,6 @@ async function playAudio(videoId, title, config, rl) {
 
     mpv.stderr.on('data', (data) => {
       const error = data.toString().trim();
-      // 일반적인 상태 메시지는 무시
       if (error.includes('ERROR') || error.includes('Failed')) {
         console.error(`\nmpv error: ${error}`);
       }
