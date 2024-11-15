@@ -10,9 +10,9 @@ async function saveJsonToFile(filename, data, dir = 'data') {
         const jsonString = JSON.stringify(data, null, 2);
         
         await fs.writeFile(filePath, jsonString, 'utf8');
-        console.log(`파일이 성공적으로 저장되었습니다: ${filePath}`);
+        console.log(`[APISyncService] 파일이 성공적으로 저장되었습니다: ${filePath}`);
     } catch (error) {
-        console.error('파일 저장 중 오류 발생:', error);
+        console.error('[APISyncService] 파일 저장 중 오류 발생:', error);
         throw error;
     }
 }
@@ -26,7 +26,7 @@ async function readJsonFromFile(filename, dir = 'data') {
         const data = JSON.parse(jsonString);
         return data;
     } catch (error) {
-        console.error('파일 읽기 중 오류 발생:', error);
+        console.error('[APISyncService] 파일 읽기 중 오류 발생:', error);
         throw error;
     }
 }
