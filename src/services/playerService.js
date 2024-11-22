@@ -7,11 +7,17 @@ async function playAudio(videoId, title, config) {
     const mpvArgs = [
       `ytdl://${videoId}`,
       '--no-video', 
-      '--term-osd-bar',
+      // '--term-osd-bar',
       '--volume=100',
       `--script-opts=ytdl_path=${config.ytdlp.path}`,
       '--ytdl-format=bestaudio[ext=m4a]/bestaudio',
-      '--force-seekable=yes'
+      '--force-seekable=yes',
+      '--cache=yes',
+      '--cache-secs=60',
+      '--demuxer-max-bytes=500M',
+      '--demuxer-readahead-secs=20',
+      '--network-timeout=60',
+      '--no-terminal',
     ];
 
     if (config.mpv.options.audioDevice) {
@@ -42,7 +48,7 @@ async function playAudio(videoId, title, config) {
     });
 
     mpv.stderr.on('data', (data) => {
-      console.error(`mpv: ${data}`);
+      console.error(`[MPV]: ${data}`);
     });
 
     mpv.on('close', (code) => {

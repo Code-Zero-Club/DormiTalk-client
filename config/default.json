@@ -6,7 +6,9 @@
       "geoBypass": true,
       "noCheckCertificate": true,
       "audioFormat": "m4a",
-      "audioQuality": 0
+      "audioQuality": 0,
+      "bufferSize": 16384,
+      "retries": "infinite"
     }
   },
   "mpv": {

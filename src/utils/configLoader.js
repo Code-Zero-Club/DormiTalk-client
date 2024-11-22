@@ -5,11 +5,11 @@ async function loadConfig() {
   try {
     const configPath = path.join(__dirname, '../../config/default.json');
     const configFile = await fs.readFile(configPath, 'utf8');
-    console.log('Config loaded successfully.');
+    console.log('[LoadConfigService] Config loaded successfully.');
     return JSON.parse(configFile);
   } catch (error) {
-    console.error('Error loading config:', error.message);
-    console.error('Using default configuration...');
+    console.error('[LoadConfigService] Error loading config:', error.message);
+    console.error('[LoadConfigService] Using default configuration...');
     return {
       ytdlp: {
         path: '/usr/local/bin/yt-dlp',
