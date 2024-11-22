@@ -1,5 +1,6 @@
 const { getSongs, getSchedulers } = require('./services/dormiTalkService');
-const { saveJsonToFile, readJsonFromFile } = require('./utils/dataSave');
+const { saveJsonToFile } = require('./utils/dataSave');
+const { checkPlayTime } = require('./utils/checkScheduler');
 
 async function saveData() {
   try {
@@ -15,37 +16,12 @@ async function saveData() {
   }
 }
 
-async function checkStartTime() {
-  const now = new Date();
-  const schedulerData = await readJsonFromFile('schedulers');
-  const { start_time, play_time } = schedulerData[0];
-
-  const [startHour, startMinute, startSecond] = start_time.split(':').map(Number);
-  const [playHour, playMinute, playSecond] = play_time.split(':').map(Number);
-
-  let endHour = startHour + playHour;
-  let endMinute = startMinute + playMinute;
-  let endSecond = startSecond + playSecond;
-
-  endMinute += Math.floor(endSecond / 60);
-  endSecond %= 60;
-
-  endHour += Math.floor(endMinute / 60);
-  endMinute %= 60;
-
-  endHour %= 24;
-
-  const nowHour = now.getHours();
-  const nowMinute = now.getMinutes();
-  const nowSecond = now.getSeconds();
-
-  if (nowHour > endHour) return true;
-  if (nowHour < endHour) return false;
-
-  if (nowMinute > endMinute) return true;
-  if (nowMinute < endMinute) return false;
-
-  return nowSecond >= endSecond;
+async function play() {
+  if (await checkPlayTime()) {
+    console.log('[TimeCheckService] 플레이 시간입니다.');
+  } else {
+    console.log('[TimeCheckService] 플레이 시간이 아닙니다.');
+  }
 }
 
 async function main() {
@@ -56,6 +32,7 @@ async function main() {
 
   setInterval(async () => {
     await saveData();
+    await play();
   }, 10000);
 }
 

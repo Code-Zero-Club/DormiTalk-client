@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'https://lined-embassy-dale-physics.trycloudflare.com/api';
+const API_BASE_URL = 'https://prayer-grass-des-zoning.trycloudflare.com/api';
 
 const getSongs = async () => {
   try {
