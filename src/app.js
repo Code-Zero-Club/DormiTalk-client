@@ -1,3 +1,6 @@
+const { loadConfig } = require('./utils/configLoader');
+const CLI = require('./cli/interface');
+
 const { getSongs, getSchedulers } = require('./services/dormiTalkService');
 const { saveJsonToFile } = require('./utils/dataSave');
 const { checkPlayTime } = require('./utils/checkScheduler');
@@ -19,6 +22,9 @@ async function saveData() {
 async function play() {
   if (await checkPlayTime()) {
     console.log('[TimeCheckService] 플레이 시간입니다.');
+    const config = await loadConfig();
+    const cli = new CLI();
+    await cli.start(config, videos); // videos is not defined
   } else {
     console.log('[TimeCheckService] 플레이 시간이 아닙니다.');
   }

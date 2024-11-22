@@ -1,7 +1,6 @@
 const readline = require('readline');
 const { exec } = require('child_process');
 const util = require('util');
-const { searchYouTube } = require('../services/youtubeService');
 const { playAudio } = require('../services/playerService');
 
 const execPromise = util.promisify(exec);
@@ -18,40 +17,11 @@ class CLI {
     this.askQuestion = this.askQuestion.bind(this);
   }
 
-  askQuestion(question) {
-    return new Promise((resolve) => {
-      this.rl.question(question, (answer) => {
-        resolve(answer);
-      });
-    });
-  }
-
-  async start(config) {
-    console.log('YouTube Music Player for Raspbian');
+  async start(config, videos) {
+    console.log('[MusicService] 서비스가 시작되었습니다.');
     await this.checkDependencies(config);
 
     while (true) {
-      const query = await this.askQuestion('\nEnter a song to search (or "quit" to exit): ');
-      
-      if (query.toLowerCase() === 'quit') {
-        this.rl.close();
-        break;
-      }
-
-      const videos = await searchYouTube(query, config);
-      if (videos.length === 0) {
-        console.log('No results found.');
-        continue;
-      }
-
-      console.log('\nSearch results:');
-      videos.forEach((video, index) => {
-        console.log(`${index + 1}. ${video.title}`);
-      });
-
-      const choice = await this.askQuestion('\nEnter the number of the song to play: ');
-      const index = parseInt(choice) - 1;
-
       if (index >= 0 && index < videos.length) {
         await playAudio(videos[index].id, videos[index].title, config, this.rl);
       } else {
