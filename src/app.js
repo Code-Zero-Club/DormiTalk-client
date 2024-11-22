@@ -2,8 +2,10 @@ const { loadConfig } = require('./utils/configLoader');
 const CLI = require('./cli/interface');
 
 const { getSongs, getSchedulers } = require('./services/dormiTalkService');
-const { saveJsonToFile } = require('./utils/dataSave');
+const { saveJsonToFile, readJsonFromFile } = require('./utils/dataSave');
 const { checkPlayTime } = require('./utils/checkScheduler');
+
+let isPlaying = false;
 
 async function saveData() {
   try {
@@ -19,12 +21,35 @@ async function saveData() {
   }
 }
 
+function extractYoutubeId(youtubeLink) {
+  const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|v\/|embed\/))([^?&]+)/;
+  const match = youtubeLink.match(regex);
+  return match ? match[1] : null;
+}
+
+async function exportSongs() {
+  const songs = await readJsonFromFile('songs');
+  return songs.map(song => ({
+    ...song,
+    id: extractYoutubeId(song.youtube_link)
+  }));
+}
+
 async function play() {
+  if (isPlaying) return;
+
   if (await checkPlayTime()) {
     console.log('[TimeCheckService] 플레이 시간입니다.');
     const config = await loadConfig();
     const cli = new CLI();
-    await cli.start(config, videos); // videos is not defined
+
+    try {
+      isPlaying = true;
+      const processedSongs = await exportSongs();
+      await cli.start(config, processedSongs);
+    } finally {
+      isPlaying = false;
+    }
   } else {
     console.log('[TimeCheckService] 플레이 시간이 아닙니다.');
   }
