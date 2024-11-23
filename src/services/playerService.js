@@ -11,25 +11,47 @@ async function playAudio(videoId, title, config) {
       
       const mpvArgs = [
         `ytdl://${videoId}`,
-        '--no-video', 
-        '--volume=100',
+        '--no-video',
+        '--volume=50',
         `--script-opts=ytdl_path=${config.ytdlp.path}`,
         '--ytdl-format=bestaudio[ext=m4a]/bestaudio',
+        
         '--force-seekable=yes',
         '--cache=yes',
-        '--cache-secs=60',
-        '--demuxer-max-bytes=500M',
-        '--demuxer-readahead-secs=20',
-        '--network-timeout=60',
-        '--no-terminal',
-        '--ao=pulse'
+        '--cache-secs=120',
+        '--demuxer-max-bytes=1024M',
+        '--demuxer-readahead-secs=60',
+        '--network-timeout=120',
+        
+        '--hr-seek=yes',
+        '--reset-on-next-file=all',
+        '--stream-buffer-size=4M',
+        '--demuxer-lavf-buffersize=32768',
+        '--demuxer-thread=yes',
+        '--audio-buffer=0.5',
+        '--audio-pitch-correction=no',
+        '--gapless-audio=yes',
+        '--audio-samplerate=48000',
+        '--audio-format=float',
+        '--pulse-latency-hacks=yes',
+        '--quiet'
+        
+        // '--no-terminal',
+        // '--ao=pulse'
       ];
 
       if (config.mpv.options.audioDevice) {
         mpvArgs.push(`--audio-device=${config.mpv.options.audioDevice}`);
       }
 
-      const mpv = spawn('mpv', mpvArgs);
+      const mpv = spawn('mpv', mpvArgs, {
+        env: {
+          ...process.env,
+          PULSE_LATENCY_MSEC: '30',
+          PULSE_STREAM_NAME: 'Music Player'
+        }
+      });
+
       currentMpvProcess = mpv;
       let duration = null;
       let currentTime = 0;
