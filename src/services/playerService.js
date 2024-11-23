@@ -34,10 +34,10 @@ async function playAudio(videoId, title, config) {
         '--audio-samplerate=48000',
         '--audio-format=float',
         '--pulse-latency-hacks=yes',
-        '--quiet'
+        '--quiet',
         
-        // '--no-terminal',
-        // '--ao=pulse'
+        '--no-terminal',
+        '--ao=pulse'
       ];
 
       if (config.mpv.options.audioDevice) {
