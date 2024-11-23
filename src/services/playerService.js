@@ -1,10 +1,13 @@
 const { spawn } = require('child_process');
-const { resolve } = require('path');
+
+let currentMpvProcess = null;
+let currentReject = null;
 
 async function playAudio(videoId, title, config) {
   return new Promise((resolve, reject) => {
     try {
-      console.log(`\nPlaying: ${title}`);
+      console.log(`[PlayerService] Playing: ${title}`);
+      currentReject = reject;
       
       const mpvArgs = [
         `ytdl://${videoId}`,
@@ -20,6 +23,7 @@ async function playAudio(videoId, title, config) {
         '--demuxer-readahead-secs=20',
         '--network-timeout=60',
         '--no-terminal',
+        '--ao=pulse'
       ];
 
       if (config.mpv.options.audioDevice) {
@@ -27,8 +31,16 @@ async function playAudio(videoId, title, config) {
       }
 
       const mpv = spawn('mpv', mpvArgs);
+      currentMpvProcess = mpv;
       let duration = null;
       let currentTime = 0;
+
+      process.on('SIGINT', () => {
+        if (currentMpvProcess) {
+          stopPlayback();
+          process.exit(0);
+        }
+      });
 
       mpv.stdout.on('data', (data) => {
         const output = data.toString().trim();
@@ -50,10 +62,12 @@ async function playAudio(videoId, title, config) {
       });
 
       mpv.stderr.on('data', (data) => {
-        console.error(`[MPV]${data}`);
+        console.error(`[PlayerService] ${data}`);
       });
 
       mpv.on('close', (code) => {
+        currentMpvProcess = null;
+        currentReject = null;
         if (code !== 0) {
           reject(new Error(`mpv process exited with code ${code}`));
         } else {
@@ -65,10 +79,26 @@ async function playAudio(videoId, title, config) {
       return mpv;
 
     } catch (error) {
-      console.error('Error playing audio:', error);
+      console.error('[PlayerService] Error playing audio:', error);
       reject(error);
     }
   });
 }
 
-module.exports = { playAudio };
+function stopPlayback() {
+  if (currentMpvProcess) {
+    currentMpvProcess.kill('SIGTERM');
+    currentMpvProcess = null;
+    console.log('[PlayerService] 재생이 중단되었습니다.');
+
+    if (currentReject) {
+      currentReject(new Error('Playback stopped manually'));
+      currentReject = null;
+    }
+  }
+}
+
+module.exports = {
+  playAudio,
+  stopPlayback
+};

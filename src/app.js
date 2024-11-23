@@ -6,6 +6,7 @@ const { saveJsonToFile, readJsonFromFile } = require('./utils/dataSave');
 const { checkPlayTime } = require('./utils/checkScheduler');
 
 let isPlaying = false;
+let cli = null;
 
 async function saveData() {
   try {
@@ -41,17 +42,32 @@ async function play() {
   if (await checkPlayTime()) {
     console.log('[TimeCheckService] 플레이 시간입니다.');
     const config = await loadConfig();
-    const cli = new CLI();
+    
+    if (!cli) {
+      cli = new CLI();
+    }
 
     try {
       isPlaying = true;
       const processedSongs = await exportSongs();
       await cli.start(config, processedSongs);
+    } catch (error) {
+      console.error('[PlayService] 재생 중 오류 발생:', error);
     } finally {
       isPlaying = false;
+      cli = null;
     }
   } else {
     console.log('[TimeCheckService] 플레이 시간이 아닙니다.');
+  }
+}
+
+async function checkAndStopIfNeeded() {
+  const isPlayTime = await checkPlayTime();
+  if (!isPlayTime && isPlaying && cli) {
+    await cli.setShouldStop();
+    isPlaying = false;
+    cli = null;
   }
 }
 
@@ -61,9 +77,13 @@ async function main() {
   
   await saveData();
 
+  setInterval(checkAndStopIfNeeded, 5000);
+
   setInterval(async () => {
     await saveData();
-    await play();
+    if (!isPlaying) {
+      await play();
+    }
   }, 10000);
 }
 

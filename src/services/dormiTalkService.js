@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const API_BASE_URL = 'https://prayer-grass-des-zoning.trycloudflare.com/api';
+const API_BASE_URL = 'http://112.164.145.34:5000/api';
 
 const getSongs = async () => {
   try {
