@@ -2,8 +2,9 @@ const { loadConfig } = require('./utils/configLoader');
 const CLI = require('./cli/interface');
 
 const { getSongs, getSchedulers } = require('./services/dormiTalkService');
-const { saveJsonToFile, readJsonFromFile } = require('./utils/dataSave');
+const { saveJsonToFile } = require('./utils/dataSave');
 const { checkPlayTime } = require('./utils/checkScheduler');
+const { exportSongs } = require('./utils/extractYoutube');
 
 let isPlaying = false;
 let cli = null;
@@ -20,20 +21,6 @@ async function saveData() {
   } catch (error) {
     console.error('[APISyncService] 데이터 저장 중 오류 발생:', error);
   }
-}
-
-function extractYoutubeId(youtubeLink) {
-  const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|v\/|embed\/))([^?&]+)/;
-  const match = youtubeLink.match(regex);
-  return match ? match[1] : null;
-}
-
-async function exportSongs() {
-  const songs = await readJsonFromFile('songs');
-  return songs.map(song => ({
-    ...song,
-    id: extractYoutubeId(song.youtube_link)
-  }));
 }
 
 async function play() {
