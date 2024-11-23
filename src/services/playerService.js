@@ -12,7 +12,6 @@ async function playAudio(videoId, title, config) {
       const mpvArgs = [
         `ytdl://${videoId}`,
         '--no-video', 
-        // '--term-osd-bar',
         '--volume=100',
         `--script-opts=ytdl_path=${config.ytdlp.path}`,
         '--ytdl-format=bestaudio[ext=m4a]/bestaudio',
