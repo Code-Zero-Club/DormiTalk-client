@@ -2,7 +2,7 @@ const { loadConfig } = require('./utils/configLoader');
 const CLI = require('./cli/interface');
 
 const { saveData } = require('./utils/dataSave');
-const { checkPlayTime } = require('./utils/checkScheduler');
+const { checkPlayTime, checkWeekday } = require('./utils/checkScheduler');
 const { exportSongs } = require('./utils/extractYoutube');
 
 let isPlaying = false;
@@ -10,8 +10,8 @@ let cli = null;
 
 async function play() {
   if (isPlaying) return;
-
-  if (await checkPlayTime()) {
+  
+  if (await checkPlayTime() && await checkWeekday()) {
     console.log('[TimeCheckService] 플레이 시간입니다.');
     const config = await loadConfig();
     
@@ -48,6 +48,7 @@ async function main() {
   console.log(' ');
   
   await saveData();
+  await play();
 
   setInterval(checkAndStopIfNeeded, 5000);
 

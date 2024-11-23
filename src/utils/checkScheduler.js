@@ -5,7 +5,7 @@ async function checkWeekday() {
   const schedulerData = await readJsonFromFile('schedulers');
   const { day_of_week } = schedulerData[0];
   
-  const currentDay = now.getDay();
+  const currentDay = now.getDay().toString();
   const isScheduledDay = day_of_week.includes(currentDay);
 
   return isScheduledDay;
