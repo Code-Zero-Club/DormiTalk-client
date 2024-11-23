@@ -1,27 +1,12 @@
 const { loadConfig } = require('./utils/configLoader');
 const CLI = require('./cli/interface');
 
-const { getSongs, getSchedulers } = require('./services/dormiTalkService');
-const { saveJsonToFile } = require('./utils/dataSave');
+const { saveData } = require('./utils/dataSave');
 const { checkPlayTime } = require('./utils/checkScheduler');
 const { exportSongs } = require('./utils/extractYoutube');
 
 let isPlaying = false;
 let cli = null;
-
-async function saveData() {
-  try {
-    const songs = await getSongs();
-    const schedulers = await getSchedulers();
-
-    await saveJsonToFile('songs', songs);
-    await saveJsonToFile('schedulers', schedulers);
-
-    console.log('[APISyncService] 데이터 저장 완료:', new Date().toLocaleString());
-  } catch (error) {
-    console.error('[APISyncService] 데이터 저장 중 오류 발생:', error);
-  }
-}
 
 async function play() {
   if (isPlaying) return;
