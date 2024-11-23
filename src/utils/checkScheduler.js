@@ -1,5 +1,16 @@
 const { readJsonFromFile } = require('./dataSave');
 
+async function checkWeekday() {
+  const now = new Date();
+  const schedulerData = await readJsonFromFile('schedulers');
+  const { day_of_week } = schedulerData[0];
+  
+  const currentDay = now.getDay();
+  const isScheduledDay = day_of_week.includes(currentDay);
+
+  return isScheduledDay;
+}
+
 async function checkPlayTime() {
   const now = new Date();
   const schedulerData = await readJsonFromFile('schedulers');
@@ -24,5 +35,6 @@ async function checkPlayTime() {
 }
 
 module.exports = {
-  checkPlayTime
+  checkPlayTime,
+  checkWeekday
 };
