@@ -1,12 +1,23 @@
 const { readJsonFromFile } = require('./dataSave');
 
+const WEEKDAY_MAP = {
+  '일': '0',
+  '월': '1',
+  '화': '2',
+  '수': '3',
+  '목': '4',
+  '금': '5',
+  '토': '6'
+};
+
 async function checkWeekday() {
   const now = new Date();
   const schedulerData = await readJsonFromFile('schedulers');
   const { day_of_week } = schedulerData[0];
   
   const currentDay = now.getDay().toString();
-  const isScheduledDay = day_of_week.includes(currentDay);
+  const scheduledDays = day_of_week.map(day => WEEKDAY_MAP[day]);
+  const isScheduledDay = scheduledDays.includes(currentDay);
 
   return isScheduledDay;
 }
@@ -17,19 +28,14 @@ async function checkPlayTime() {
   const { start_time, play_time } = schedulerData[0];
 
   const [startHour, startMinute, startSecond] = start_time.split(':').map(Number);
-  const [playHour, playMinute, playSecond] = play_time.split(':').map(Number);
-
-  let endHour = startHour + playHour;
-  let endMinute = startMinute + playMinute;
-  let endSecond = startSecond + playSecond;
-
+  
+  const startTotalSeconds = startHour * 3600 + startMinute * 60 + startSecond;
+  const endTotalSeconds = startTotalSeconds + Number(play_time);
+  
   const nowHour = now.getHours();
   const nowMinute = now.getMinutes();
   const nowSecond = now.getSeconds();
-
-  let startTotalSeconds = startHour * 3600 + startMinute * 60 + startSecond;
-  let nowTotalSeconds = nowHour * 3600 + nowMinute * 60 + nowSecond;
-  let endTotalSeconds = endHour * 3600 + endMinute * 60 + endSecond;
+  const nowTotalSeconds = nowHour * 3600 + nowMinute * 60 + nowSecond;
 
   return startTotalSeconds <= nowTotalSeconds && nowTotalSeconds <= endTotalSeconds;
 }
